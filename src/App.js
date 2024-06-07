@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import GoogleMapReact from "google-map-react";
+// import GoogleMapReact from "google-map-react";
 import GeoJsonUploader from "./components/FileUploader";
 import GoogleMap from "./components/GoogleMap";
 // import MedianIncomeKml from "./data/test.kml";
 
-const GOOGLE_API_KEY = "AIzaSyBJDDOSHtrJ1kkyo5Zrjj55XYE55v77fus";
+// const GOOGLE_API_KEY = "AIzaSyBJDDOSHtrJ1kkyo5Zrjj55XYE55v77fus";
 
 export default function App() {
   const [geoData, setGeoData] = useState(null);

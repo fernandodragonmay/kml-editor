@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   GoogleMap,
-  LoadScript,
-  Data,
+  // LoadScript,
+  // Data,
   useJsApiLoader,
   Polygon,
   Polyline,
@@ -22,13 +22,13 @@ const defaultCenter = {
 function getCenterOfPolyline(coordinates) {
   let lat = 0;
   let lng = 0;
-  coordinates.forEach(coord => {
-      lng += coord[0];
-      lat += coord[1];
+  coordinates.forEach((coord) => {
+    lng += coord[0];
+    lat += coord[1];
   });
   return {
-      lat: lat / coordinates.length,
-      lng: lng / coordinates.length
+    lat: lat / coordinates.length,
+    lng: lng / coordinates.length,
   };
 }
 
@@ -129,7 +129,10 @@ function MyComponent({ geojsonData }) {
                     onClick={() => setSelectedFeature(feature)}
                   >
                     {selectedFeature === feature &&
-                      (console.log("InfoWindow is being rendered", feature.geometry.coordinates),
+                      (console.log(
+                        "InfoWindow is being rendered",
+                        feature.geometry.coordinates
+                      ),
                       (
                         <InfoWindow
                           position={getCenterOfPolyline(
@@ -153,6 +156,8 @@ function MyComponent({ geojsonData }) {
                       ))}
                   </Polyline>
                 );
+              } else {
+                return null;
               }
             })}
         </GoogleMap>
