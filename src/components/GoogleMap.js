@@ -20,15 +20,17 @@ const defaultCenter = {
 };
 
 function getCenterOfPolyline(coordinates) {
-  let lat = 0;
-  let lng = 0;
-  coordinates.forEach((coord) => {
-    lng += coord[0];
-    lat += coord[1];
-  });
+  let latSum = 0;
+  let lngSum = 0;
+
+  for (let i = 0; i < coordinates.length; i++) {
+    latSum += coordinates[i][1];
+    lngSum += coordinates[i][0];
+  }
+
   return {
-    lat: lat / coordinates.length,
-    lng: lng / coordinates.length,
+    lat: latSum / coordinates.length,
+    lng: lngSum / coordinates.length,
   };
 }
 
@@ -41,6 +43,7 @@ function MyComponent({ geojsonData }) {
   const mapRef = useRef();
   const [center, setCenter] = useState(defaultCenter);
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const [editingFeature, setEditingFeature] = useState(null);
 
   useEffect(() => {
     console.log("geojsonData", geojsonData);
@@ -93,11 +96,11 @@ function MyComponent({ geojsonData }) {
                       })
                     )}
                     options={{
-                      fillColor: feature.properties.fill,
-                      fillOpacity: feature.properties["fill-opacity"],
-                      strokeColor: feature.properties.stroke,
-                      strokeOpacity: feature.properties["stroke-opacity"],
-                      strokeWeight: feature.properties["stroke-width"],
+                      fillColor: feature.properties?.fill,
+                      fillOpacity: feature.properties?.["fill-opacity"],
+                      strokeColor: feature.properties?.stroke,
+                      strokeOpacity: feature.properties?.["stroke-opacity"],
+                      strokeWeight: feature.properties?.["stroke-width"],
                     }}
                     onMouseOver={() => setSelectedFeature(feature)}
                     onMouseOut={() => setSelectedFeature(null)}
@@ -120,23 +123,31 @@ function MyComponent({ geojsonData }) {
                       lng: coordinate[0],
                     }))}
                     options={{
-                      strokeColor: feature.properties.stroke,
-                      strokeOpacity: feature.properties["stroke-opacity"],
-                      strokeWeight: feature.properties["stroke-width"],
+                      strokeColor:
+                        selectedFeature === feature ||
+                        editingFeature === feature
+                          ? "red"
+                          : feature.properties?.stroke,
+                      strokeOpacity: feature.properties?.["stroke-opacity"],
+                      strokeWeight:
+                        selectedFeature === feature ||
+                        editingFeature === feature
+                          ? 5
+                          : feature.properties?.["stroke-width"],
                     }}
-                    // onMouseOver={() => setSelectedFeature(feature)}
-                    // onMouseOut={() => setSelectedFeature(null)}
-                    onClick={() => setSelectedFeature(feature)}
+                    onMouseOver={() => setSelectedFeature(feature)}
+                    onMouseOut={() => setSelectedFeature(null)}
+                    onClick={() => setEditingFeature(feature)}
                   >
-                    {selectedFeature === feature &&
+                    {/* {selectedFeature === feature &&
                       (console.log(
                         "InfoWindow is being rendered",
-                        feature.geometry.coordinates
+                        getCenterOfPolyline(feature.geometry.coordinates)
                       ),
                       (
                         <InfoWindow
                           position={getCenterOfPolyline(
-                            feature.geometry.coordinates
+                            selectedFeature.geometry.coordinates
                           )}
                           options={{
                             pixelOffset: new window.google.maps.Size(0, -30),
@@ -150,16 +161,73 @@ function MyComponent({ geojsonData }) {
                               borderRadius: "5px",
                             }}
                           >
-                            {feature.properties.name}
+                            {selectedFeature.properties.name}
+                            <button
+                              onClick={() => setEditingFeature(selectedFeature)}
+                            >
+                              Edit
+                            </button>
                           </div>
                         </InfoWindow>
-                      ))}
+                      ))} */}
                   </Polyline>
                 );
               } else {
                 return null;
               }
             })}
+
+          {(selectedFeature || editingFeature) && (
+            <InfoWindow
+              position={getCenterOfPolyline(
+                (selectedFeature || editingFeature).geometry.coordinates
+              )}
+              options={{
+                pixelOffset: new window.google.maps.Size(0, -30),
+              }}
+              onCloseClick={() => {
+                setSelectedFeature(null);
+                setEditingFeature(null);
+              }}
+            >
+              <div
+                className="info-window-text"
+                style={{
+                  display: "flex",
+                  gap: "4px",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  padding: "10px",
+                  borderRadius: "5px",
+                  fontSize: "14px", 
+                  color: "#333", 
+                  fontFamily: "Arial, sans-serif", 
+                }}
+              >
+                <span>{(selectedFeature || editingFeature).properties.name}</span>
+                <button
+                  onClick={() =>
+                    setEditingFeature(selectedFeature || editingFeature)
+                  }
+                  style={{
+                    backgroundColor: "#4CAF50", 
+                    border: "none", 
+                    color: "white", 
+                    padding: "10px 20px", 
+                    textAlign: "center", 
+                    textDecoration: "none", 
+                    display: "inline-block", 
+                    fontSize: "16px", 
+                    margin: "4px 2px", 
+                    cursor: "pointer", 
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
+            </InfoWindow>
+          )}
         </GoogleMap>
       )}
     </div>
