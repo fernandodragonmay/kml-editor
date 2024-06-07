@@ -16,7 +16,7 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
   });
 
   const mapRef = useRef();
-  const [geojsonData, setGeojsonData] = useState(initialGeojsonData); // Save geojsonData to state
+  const [geojsonData, setGeojsonData] = useState(initialGeojsonData);
   const [center, setCenter] = useState(defaultCenter);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [editingFeature, setEditingFeature] = useState(null);
@@ -24,6 +24,8 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [draggingFeature, setDraggingFeature] = useState(null);
+  const [draggingFeatureIndex, setDraggingFeatureIndex] = useState(null);
 
   useEffect(() => {
     setGeojsonData(initialGeojsonData);
@@ -96,6 +98,38 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
     setIsEditing(true);
   };
 
+  const handleDragEnd = (index, type) => {
+    return (e) => {
+      const latLng = e.latLng.toJSON();
+      const updatedFeatures = geojsonData.features.map((feature, i) => {
+        if (i === index && feature.geometry.type === type) {
+          const updatedCoordinates = feature.geometry.coordinates.map((coordinate) => {
+            if (type === "Polygon") {
+              return coordinate.map((coord) => {
+                return [coord[0] + latLng.lng - draggingFeature.geometry.coordinates[0][0][0], 
+                        coord[1] + latLng.lat - draggingFeature.geometry.coordinates[0][0][1]];
+              });
+            } else if (type === "LineString") {
+              return [coordinate[0] + latLng.lng - draggingFeature.geometry.coordinates[0][0], 
+                      coordinate[1] + latLng.lat - draggingFeature.geometry.coordinates[0][1]];
+            }
+          });
+          return {
+            ...feature,
+            geometry: {
+              ...feature.geometry,
+              coordinates: updatedCoordinates,
+            },
+          };
+        }
+        return feature;
+      });
+      setGeojsonData({ ...geojsonData, features: updatedFeatures });
+      setDraggingFeature(null);
+      setDraggingFeatureIndex(null);
+    };
+  };
+
   return (
     <div className="kml-editor-google-map">
       {isLoaded && (
@@ -144,6 +178,11 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
                       setIsEditing(false);
                     }}
                     onClick={() => setEditingFeature({ ...feature, index })}
+                    onDragStart={() => {
+                      setDraggingFeature(feature);
+                      setDraggingFeatureIndex(index);
+                    }}
+                    onDragEnd={handleDragEnd(index, "Polygon")}
                   ></Polygon>
                 );
               } else if (feature.geometry.type === "LineString") {
@@ -176,6 +215,12 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
                       setIsEditing(false);
                     }}
                     onClick={() => handleLineClick(feature)}
+                    onDragStart={() => {
+                      setDraggingFeature(feature);
+                      setDraggingFeatureIndex(index);
+                    }}
+                    onDragEnd={handleDragEnd(index, "LineString")}
+                    draggable
                   ></Polyline>
                 );
               } else {
