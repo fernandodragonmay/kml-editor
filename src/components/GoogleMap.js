@@ -1,62 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   GoogleMap,
-  // LoadScript,
-  // Data,
   useJsApiLoader,
   Polygon,
   Polyline,
   InfoWindow,
 } from "@react-google-maps/api";
-
-const containerStyle = {
-  width: "100%",
-  height: "100%",
-};
-
-const defaultCenter = {
-  lat: -3.745,
-  lng: -38.523,
-};
-
-function getCenterOfPolyline(coordinates) {
-  let latSum = 0;
-  let lngSum = 0;
-
-  for (let i = 0; i < coordinates.length; i++) {
-    latSum += coordinates[i][1];
-    lngSum += coordinates[i][0];
-  }
-
-  return {
-    lat: latSum / coordinates.length,
-    lng: lngSum / coordinates.length,
-  };
-}
-
-function getCenterOfPolygon(coordinates) {
-  let latSum = 0;
-  let lngSum = 0;
-  let count = 0;
-
-  for (let i = 0; i < coordinates.length; i++) {
-    for (let j = 0; j < coordinates[i].length; j++) {
-      latSum += coordinates[i][j][1];
-      lngSum += coordinates[i][j][0];
-      count++;
-    }
-  }
-
-  return {
-    lat: latSum / count,
-    lng: lngSum / count,
-  };
-}
+import { getCenterOfPolygon, getCenterOfPolyline } from "../lib/helper";
+import { containerStyle, defaultCenter } from "../lib/const";
 
 function MyComponent({ geojsonData }) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: "AIzaSyBJDDOSHtrJ1kkyo5Zrjj55XYE55v77fus",
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
   });
 
   const mapRef = useRef();
@@ -92,7 +48,7 @@ function MyComponent({ geojsonData }) {
   }, [isLoaded, geojsonData]);
 
   return (
-    <div className="google-map" style={{ flex: 1, display: "grid" }}>
+    <div className="kml-editor-google-map">
       {isLoaded && (
         <GoogleMap
           mapContainerStyle={containerStyle}
@@ -178,21 +134,7 @@ function MyComponent({ geojsonData }) {
                 setEditingFeature(null);
               }}
             >
-              <div
-                className="info-window-text"
-                style={{
-                  display: "flex",
-                  gap: "4px",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  backgroundColor: "white",
-                  padding: "10px",
-                  borderRadius: "5px",
-                  fontSize: "14px",
-                  color: "#333",
-                  fontFamily: "Arial, sans-serif",
-                }}
-              >
+              <div className="info-window-popup">
                 <span>
                   {(selectedFeature || editingFeature).properties?.name ||
                     `Polygon ${
@@ -205,18 +147,7 @@ function MyComponent({ geojsonData }) {
                   onClick={() =>
                     setEditingFeature(selectedFeature || editingFeature)
                   }
-                  style={{
-                    backgroundColor: "#4CAF50",
-                    border: "none",
-                    color: "white",
-                    padding: "10px 20px",
-                    textAlign: "center",
-                    textDecoration: "none",
-                    display: "inline-block",
-                    fontSize: "16px",
-                    margin: "4px 2px",
-                    cursor: "pointer",
-                  }}
+                  className="info-window-button"
                 >
                   Edit
                 </button>
