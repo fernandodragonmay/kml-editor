@@ -34,6 +34,25 @@ function getCenterOfPolyline(coordinates) {
   };
 }
 
+function getCenterOfPolygon(coordinates) {
+  let latSum = 0;
+  let lngSum = 0;
+  let count = 0;
+
+  for (let i = 0; i < coordinates.length; i++) {
+    for (let j = 0; j < coordinates[i].length; j++) {
+      latSum += coordinates[i][j][1];
+      lngSum += coordinates[i][j][0];
+      count++;
+    }
+  }
+
+  return {
+    lat: latSum / count,
+    lng: lngSum / count,
+  };
+}
+
 function MyComponent({ geojsonData }) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -102,17 +121,12 @@ function MyComponent({ geojsonData }) {
                       strokeOpacity: feature.properties?.["stroke-opacity"],
                       strokeWeight: feature.properties?.["stroke-width"],
                     }}
-                    onMouseOver={() => setSelectedFeature(feature)}
+                    onMouseOver={() =>
+                      setSelectedFeature({ ...feature, index })
+                    }
                     onMouseOut={() => setSelectedFeature(null)}
-                  >
-                    {selectedFeature === feature && (
-                      <InfoWindow
-                        position={feature.geometry.coordinates[0][0].reverse()}
-                      >
-                        <div>{feature.properties.name}</div>
-                      </InfoWindow>
-                    )}
-                  </Polygon>
+                    onClick={() => setEditingFeature({ ...feature, index })}
+                  ></Polygon>
                 );
               } else if (feature.geometry.type === "LineString") {
                 return (
@@ -138,39 +152,7 @@ function MyComponent({ geojsonData }) {
                     onMouseOver={() => setSelectedFeature(feature)}
                     onMouseOut={() => setSelectedFeature(null)}
                     onClick={() => setEditingFeature(feature)}
-                  >
-                    {/* {selectedFeature === feature &&
-                      (console.log(
-                        "InfoWindow is being rendered",
-                        getCenterOfPolyline(feature.geometry.coordinates)
-                      ),
-                      (
-                        <InfoWindow
-                          position={getCenterOfPolyline(
-                            selectedFeature.geometry.coordinates
-                          )}
-                          options={{
-                            pixelOffset: new window.google.maps.Size(0, -30),
-                          }}
-                        >
-                          <div
-                            className="info-window-text"
-                            style={{
-                              backgroundColor: "white",
-                              padding: "10px",
-                              borderRadius: "5px",
-                            }}
-                          >
-                            {selectedFeature.properties.name}
-                            <button
-                              onClick={() => setEditingFeature(selectedFeature)}
-                            >
-                              Edit
-                            </button>
-                          </div>
-                        </InfoWindow>
-                      ))} */}
-                  </Polyline>
+                  ></Polyline>
                 );
               } else {
                 return null;
@@ -179,9 +161,15 @@ function MyComponent({ geojsonData }) {
 
           {(selectedFeature || editingFeature) && (
             <InfoWindow
-              position={getCenterOfPolyline(
-                (selectedFeature || editingFeature).geometry.coordinates
-              )}
+              position={
+                selectedFeature?.geometry.type === "Polygon"
+                  ? getCenterOfPolygon(
+                      (selectedFeature || editingFeature).geometry.coordinates
+                    )
+                  : getCenterOfPolyline(
+                      (selectedFeature || editingFeature).geometry.coordinates
+                    )
+              }
               options={{
                 pixelOffset: new window.google.maps.Size(0, -30),
               }}
@@ -200,27 +188,34 @@ function MyComponent({ geojsonData }) {
                   backgroundColor: "white",
                   padding: "10px",
                   borderRadius: "5px",
-                  fontSize: "14px", 
-                  color: "#333", 
-                  fontFamily: "Arial, sans-serif", 
+                  fontSize: "14px",
+                  color: "#333",
+                  fontFamily: "Arial, sans-serif",
                 }}
               >
-                <span>{(selectedFeature || editingFeature).properties.name}</span>
+                <span>
+                  {(selectedFeature || editingFeature).properties?.name ||
+                    `Polygon ${
+                      selectedFeature?.geometry.type === "Polygon"
+                        ? selectedFeature.id || selectedFeature.index + 1
+                        : ""
+                    }`}
+                </span>
                 <button
                   onClick={() =>
                     setEditingFeature(selectedFeature || editingFeature)
                   }
                   style={{
-                    backgroundColor: "#4CAF50", 
-                    border: "none", 
-                    color: "white", 
-                    padding: "10px 20px", 
-                    textAlign: "center", 
-                    textDecoration: "none", 
-                    display: "inline-block", 
-                    fontSize: "16px", 
-                    margin: "4px 2px", 
-                    cursor: "pointer", 
+                    backgroundColor: "#4CAF50",
+                    border: "none",
+                    color: "white",
+                    padding: "10px 20px",
+                    textAlign: "center",
+                    textDecoration: "none",
+                    display: "inline-block",
+                    fontSize: "16px",
+                    margin: "4px 2px",
+                    cursor: "pointer",
                   }}
                 >
                   Edit
