@@ -25,7 +25,6 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
   const [color, setColor] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [draggingFeature, setDraggingFeature] = useState(null);
-  const [draggingFeatureIndex, setDraggingFeatureIndex] = useState(null);
 
   useEffect(() => {
     setGeojsonData(initialGeojsonData);
@@ -101,19 +100,38 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
   const handleDragEnd = (index, type) => {
     return (e) => {
       const latLng = e.latLng.toJSON();
-      const updatedFeatures = JSON.parse(JSON.stringify(geojsonData.features)).map((feature, i) => {
+      const updatedFeatures = JSON.parse(
+        JSON.stringify(geojsonData.features)
+      ).map((feature, i) => {
         if (i === index && feature.geometry.type === type) {
-          const updatedCoordinates = feature.geometry.coordinates.map((coordinate) => {
-            if (type === "Polygon") {
-              return coordinate.map((coord) => {
-                return [coord[0] + latLng.lng - draggingFeature.geometry.coordinates[0][0][0], 
-                        coord[1] + latLng.lat - draggingFeature.geometry.coordinates[0][0][1], 0];
-              });
-            } else if (type === "LineString") {
-              return [coordinate[0] + latLng.lng - draggingFeature.geometry.coordinates[0][0], 
-                      coordinate[1] + latLng.lat - draggingFeature.geometry.coordinates[0][1], 0];
+          const updatedCoordinates = feature.geometry.coordinates.map(
+            (coordinate) => {
+              if (type === "Polygon") {
+                return coordinate.map((coord) => {
+                  return [
+                    coord[0] +
+                      latLng.lng -
+                      draggingFeature.geometry.coordinates[0][0][0],
+                    coord[1] +
+                      latLng.lat -
+                      draggingFeature.geometry.coordinates[0][0][1],
+                    0,
+                  ];
+                });
+              } else if (type === "LineString") {
+                return [
+                  coordinate[0] +
+                    latLng.lng -
+                    draggingFeature.geometry.coordinates[0][0],
+                  coordinate[1] +
+                    latLng.lat -
+                    draggingFeature.geometry.coordinates[0][1],
+                  0,
+                ];
+              }
+              return coordinate;
             }
-          });
+          );
           return {
             ...feature,
             geometry: {
@@ -124,9 +142,11 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
         }
         return feature;
       });
-      setGeojsonData({ ...JSON.parse(JSON.stringify(geojsonData)), features: updatedFeatures });
+      setGeojsonData({
+        ...JSON.parse(JSON.stringify(geojsonData)),
+        features: updatedFeatures,
+      });
       setDraggingFeature(null);
-      setDraggingFeatureIndex(null);
     };
   };
 
@@ -180,7 +200,6 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
                     onClick={() => setEditingFeature({ ...feature, index })}
                     onDragStart={() => {
                       setDraggingFeature(feature);
-                      setDraggingFeatureIndex(index);
                     }}
                     onDragEnd={handleDragEnd(index, "Polygon")}
                   ></Polygon>
@@ -217,7 +236,6 @@ function MyComponent({ geojsonData: initialGeojsonData }) {
                     onClick={() => handleLineClick(feature)}
                     onDragStart={() => {
                       setDraggingFeature(feature);
-                      setDraggingFeatureIndex(index);
                     }}
                     onDragEnd={handleDragEnd(index, "LineString")}
                     draggable
